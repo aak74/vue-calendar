@@ -1,6 +1,6 @@
-# calendar
+# Vue.js calendar
 
-> Vue.js calendar
+> Vue.js calendar based on [this article](https://medium.com/@natedoggit/building-an-extendable-calendar-in-vue-js-part-1-8fb26c04819)
 
 ## Build Setup
 
