@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <calendar></calendar>
+    <calendar :start-week="1" :locale="`ru`"></calendar>
   </div>
 </template>
 

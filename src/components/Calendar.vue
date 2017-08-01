@@ -26,23 +26,10 @@
 
 
 <script>
+import Names from '../config/locale'
+
 // Calendar data
 const _daysInMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-const startWeek = 1;
-// const startWeek = 0;
-const _weekdayLabels = [
-  {name:'Sunday', nameShort: 'Sun'},
-  {name:'Monday', nameShort: 'Mon'},
-  {name:'Tuesday', nameShort: 'Tue'},
-  {name:'Wednesday', nameShort: 'Wed'},
-  {name:'Thursday', nameShort: 'Thu'},
-  {name:'Friday', nameShort: 'Fri'},
-  {name:'Saturday', nameShort: 'Sat'},
-  {name:'Sunday', nameShort: 'Sun'},
-];
-// const _weekdayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-// const _weekdayLabels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const _monthLabels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const _today = new Date();
 const _todayComps = {
   year: _today.getFullYear(),
@@ -58,9 +45,24 @@ export default {
     };
   },
   props: {
+    startWeek: {
+      type : Number | String,
+      validator (val) {
+        let res = parseInt(val);
+        return res == 0 || res == 1
+      },
+      default: 0
+    },
     dayKey: {
       type: String,
       default: 'day'
+    },
+    locale: {
+      type: String,
+      validator (val) {
+        return Names[val] !== undefined
+      },
+      default: 'en'
     },
   },
   computed: {
@@ -99,20 +101,11 @@ export default {
     },
     // State for calendar header (no dependencies yet...)
     months() {
-      return _monthLabels.map((ml, i) => ({
-        label: ml,
-        label_1: ml.substring(0, 1),
-        label_2: ml.substring(0, 2),
-        label_3: ml.substring(0, 3),
-        number: i + 1,
-      }));
+      return Names[this.locale].monthNames
     },
     // State for weekday header (no dependencies yet...)
     weekdays() {
-      // if (startWeek) {
-      //   return _weekdayLabels.slice(startWeek);
-      // }
-      return _weekdayLabels.slice(startWeek, 7 + startWeek);
+      return Names[this.locale].weekdayNames.slice(this.startWeek, 7 + this.startWeek);
     },
     // State for calendar header
     header() {
@@ -121,7 +114,7 @@ export default {
         month: month,
         year: this.year.toString(),
         shortYear: this.year.toString().substring(2, 4),
-        label: month.label + ' ' + this.year,
+        label: month + ', ' + this.year,
       };
     },
     // Returns number for first weekday (1-7), starting from Sunday
@@ -141,7 +134,7 @@ export default {
       let previousMonth = true,
         thisMonth = false,
         nextMonth = false;
-      let day = this.previousMonthComps.days - this.firstWeekdayInMonth + 3 - startWeek;
+      let day = this.previousMonthComps.days - this.firstWeekdayInMonth + 3 - this.startWeek;
       // let day = this.previousMonthComps.days - this.firstWeekdayInMonth + 3;
       let month = this.previousMonthComps.month;
       let year = this.previousMonthComps.year;
@@ -149,7 +142,7 @@ export default {
       for (let w = 1; w <= 6 && !nextMonth; w++) {
         // Cycle through each weekday
         const week = [];
-        for (let d = 1 + startWeek; d <= 7 + startWeek; d++) {
+        for (let d = 1 + this.startWeek; d <= 7 + this.startWeek; d++) {
 
           // We need to know when to start counting actual month days
           if (previousMonth && d >= this.firstWeekdayInMonth) {
@@ -344,4 +337,4 @@ export default {
     padding: 20px
     .option
       margin-top: 5px
-  </style>
+</style>
