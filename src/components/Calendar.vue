@@ -12,7 +12,7 @@
     </div>
     <div class='weekdays'>
       <div class='weekday' v-for='weekday in weekdays'>
-        {{ weekday.label_3 }}
+        {{ weekday.nameShort }}
       </div>
     </div>
     <div class='week' v-for='week in weeks'>
@@ -28,7 +28,20 @@
 <script>
 // Calendar data
 const _daysInMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-const _weekdayLabels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const startWeek = 1;
+// const startWeek = 0;
+const _weekdayLabels = [
+  {name:'Sunday', nameShort: 'Sun'},
+  {name:'Monday', nameShort: 'Mon'},
+  {name:'Tuesday', nameShort: 'Tue'},
+  {name:'Wednesday', nameShort: 'Wed'},
+  {name:'Thursday', nameShort: 'Thu'},
+  {name:'Friday', nameShort: 'Fri'},
+  {name:'Saturday', nameShort: 'Sat'},
+  {name:'Sunday', nameShort: 'Sun'},
+];
+// const _weekdayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+// const _weekdayLabels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const _monthLabels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const _today = new Date();
 const _todayComps = {
@@ -96,13 +109,10 @@ export default {
     },
     // State for weekday header (no dependencies yet...)
     weekdays() {
-      return _weekdayLabels.map((wl, i) => ({
-        label: wl,
-        label_1: wl.substring(0, 1),
-        label_2: wl.substring(0, 2),
-        label_3: wl.substring(0, 3),
-        number: i + 1,
-      }));
+      // if (startWeek) {
+      //   return _weekdayLabels.slice(startWeek);
+      // }
+      return _weekdayLabels.slice(startWeek, 7 + startWeek);
     },
     // State for calendar header
     header() {
@@ -116,6 +126,7 @@ export default {
     },
     // Returns number for first weekday (1-7), starting from Sunday
     firstWeekdayInMonth() {
+      // console.log('firstWeekdayInMonth', new Date(this.year, this.monthIndex, 1).getDay() + 1);
       return new Date(this.year, this.monthIndex, 1).getDay() + 1;
     },
     // Returns number of days in the current month
@@ -130,14 +141,15 @@ export default {
       let previousMonth = true,
         thisMonth = false,
         nextMonth = false;
-      let day = this.previousMonthComps.days - this.firstWeekdayInMonth + 2;
+      let day = this.previousMonthComps.days - this.firstWeekdayInMonth + 3 - startWeek;
+      // let day = this.previousMonthComps.days - this.firstWeekdayInMonth + 3;
       let month = this.previousMonthComps.month;
       let year = this.previousMonthComps.year;
       // Cycle through each week of the month, up to 6 total
       for (let w = 1; w <= 6 && !nextMonth; w++) {
         // Cycle through each weekday
         const week = [];
-        for (let d = 1; d <= 7; d++) {
+        for (let d = 1 + startWeek; d <= 7 + startWeek; d++) {
 
           // We need to know when to start counting actual month days
           if (previousMonth && d >= this.firstWeekdayInMonth) {
