@@ -17,7 +17,8 @@
     </div>
     <div class='week' v-for='week in weeks'>
       <div class='day' :class='{ today: day.isToday, "not-in-month": !day.inMonth }' v-for='day in week'>
-        {{ day[dayKey] }}
+        {{ day.day }}
+        {{ day.events }}
       </div>
     </div>
   </div>
@@ -37,6 +38,16 @@ const _todayComps = {
   day: _today.getDate(),
 };
 
+
+let pad = function(num, size) {
+  if (size === undefined) {
+    size = 2
+  }
+  var s = num + "";
+  while (s.length < size) s = "0" + s;
+  return s;
+}
+
 export default {
   data() {
     return {
@@ -45,6 +56,10 @@ export default {
     };
   },
   props: {
+    events : {
+      type : Array,
+      default : []
+    },
     startWeek: {
       type : Number | String,
       validator (val) {
@@ -52,10 +67,6 @@ export default {
         return res == 0 || res == 1
       },
       default: 0
-    },
-    dayKey: {
-      type: String,
-      default: 'day'
     },
     locale: {
       type: String,
@@ -138,6 +149,7 @@ export default {
       // let day = this.previousMonthComps.days - this.firstWeekdayInMonth + 3;
       let month = this.previousMonthComps.month;
       let year = this.previousMonthComps.year;
+      console.log('events', this.events);
       // Cycle through each week of the month, up to 6 total
       for (let w = 1; w <= 6 && !nextMonth; w++) {
         // Cycle through each weekday
@@ -154,6 +166,13 @@ export default {
             previousMonth = false;
             thisMonth = true;
           }
+          let currentDay = year + '-' + pad(month) + '-' + pad(day)
+
+          let thisDayEvents = this.events.filter(day => {
+            return day.date == currentDay
+          });
+          // console.log('currentDay', currentDay);
+          console.log('currentDay', currentDay, thisDayEvents, day);
 
           // Append day info for the current week
           // Note: this might or might not be an actual month day
@@ -173,6 +192,7 @@ export default {
             isToday: day === _todayComps.day && month === _todayComps.month && year === _todayComps.year,
             isFirstDay: thisMonth && day === 1,
             isLastDay: thisMonth && day === this.daysInMonth,
+            events: thisDayEvents
           });
 
           // We've hit the last day of the month

@@ -1,11 +1,12 @@
 <template>
   <div id="app">
-    <calendar :start-week="1" :locale="`ru`"></calendar>
+    <calendar :start-week="1" :locale="`ru`" :events="events"></calendar>
   </div>
 </template>
 
 <script>
 import Calendar from './components/Calendar'
+import Events from './config/events'
 
 export default {
   name: 'app',
@@ -14,7 +15,7 @@ export default {
   },
   data () {
     return {
-      dateSelection: null,
+      events: Events,
     }
   },
 
