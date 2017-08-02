@@ -18,7 +18,12 @@
     <div class='week' v-for='week in weeks'>
       <div class='day' :class='{ today: day.isToday, "not-in-month": !day.inMonth }' v-for='day in week'>
         <span class="day__title">{{ day.day }}</span>
-        <events :events="day.events" :date="day.dateStr" @addEvent="addEvent"></events>
+        <events
+          :events="getEvents(day.dateStr)"
+          :date="day.dateStr"
+          @addEvent="addEvent"
+          @deleteEvent="deleteEvent"
+        ></events>
       </div>
     </div>
   </div>
@@ -55,8 +60,14 @@ export default {
   },
   data() {
     return {
+      getEvents: function (dateStr) {
+        return this.allEvents.filter(day => {
+          return day.date == dateStr
+        });
+      }.bind(this),
       month: _todayComps.month,
       year: _todayComps.year,
+      allEvents: this.allEvents
     };
   },
   props: {
@@ -140,7 +151,6 @@ export default {
     },
     // Returns number for first weekday (1-7), starting from Sunday
     firstWeekdayInMonth() {
-      // console.log('firstWeekdayInMonth', new Date(this.year, this.monthIndex, 1).getDay() + 1);
       return new Date(this.year, this.monthIndex, 1).getDay() + 1;
     },
     // Returns number of days in the current month
@@ -156,10 +166,8 @@ export default {
         thisMonth = false,
         nextMonth = false;
       let day = this.previousMonthComps.days - this.firstWeekdayInMonth + 3 - this.startWeek;
-      // let day = this.previousMonthComps.days - this.firstWeekdayInMonth + 3;
       let month = this.previousMonthComps.month;
       let year = this.previousMonthComps.year;
-      console.log('events', this.events);
       // Cycle through each week of the month, up to 6 total
       for (let w = 1; w <= 6 && !nextMonth; w++) {
         // Cycle through each weekday
@@ -176,21 +184,9 @@ export default {
             previousMonth = false;
             thisMonth = true;
           }
-          let currentDay = year + '-' + pad(month) + '-' + pad(day)
-
-          let thisDayEvents = this.events.filter(day => {
-            return day.date == currentDay
-          });
-          // console.log('currentDay', currentDay);
-          console.log('currentDay', currentDay, thisDayEvents, day);
-
-          // Append day info for the current week
-          // Note: this might or might not be an actual month day
-          //  We don't know how the UI wants to display various days,
-          //  so we'll supply all the data we can
           week.push({
             label: (day && thisMonth) ? day.toString() : '',
-            dateStr: currentDay,
+            dateStr: year + '-' + pad(month) + '-' + pad(day),
             day,
             weekday: d,
             week: w,
@@ -203,10 +199,8 @@ export default {
             isToday: day === _todayComps.day && month === _todayComps.month && year === _todayComps.year,
             isFirstDay: thisMonth && day === 1,
             isLastDay: thisMonth && day === this.daysInMonth,
-            events: thisDayEvents
           });
 
-          // We've hit the last day of the month
           if (thisMonth && day >= this.daysInMonth) {
             thisMonth = false;
             nextMonth = true;
@@ -252,10 +246,26 @@ export default {
       this.year--;
     },
     addEvent(dateStr) {
-      console.log('addEvent', this, dateStr);
-      this.events.push({date: dateStr, time: '12:00', title: 'Some new event', class: 'green'})
+      this.allEvents.push({
+        id: Math.random().toString(36).substr(2, 16),
+        date: dateStr,
+        time: Math.floor(Math.random() * (18 - 10)) + 10 + ':00',
+        title: 'New event ' + Math.random().toString(36).substr(2, 4),
+        class: 'smooth'
+      })
+      this.allEvents.splice(this.allEvents.length)
+    },
+    deleteEvent(id) {
+      let newEvents = this.allEvents.filter((event) => {
+        return event.id != id
+      })
+      this.$set(this, 'allEvents', newEvents)
+      this.allEvents.splice(this.allEvents.length)
     }
   },
+  created () {
+    this.allEvents = this.events
+  }
 }
 </script>
 
@@ -363,13 +373,12 @@ export default {
     align-items: center
     color: $dayColor
     background-color: $dayBackgroundColor
+    border-left: $dayBorder
     border-right: $dayBorder
     cursor: default
     position: relative
 
   .day__title
-    // justify-content: left
-    // align-items: top
     position: absolute
     top: 5px
     left: 15px
@@ -378,6 +387,7 @@ export default {
     font-weight: 500
     color: $todayColor
     background-color: $todayBackgroundColor
+    border-left: $todayBackgroundColor
     border-right: $todayBackgroundColor
 
   .not-in-month
