@@ -11,14 +11,14 @@
       <a class='arrow' @click='moveNextYear'>&raquo;</a>
     </div>
     <div class='weekdays'>
-      <div class='weekday' v-for='weekday in weekdays'>
+      <div class='weekday' v-bind:class="{ 'weekday-today': weekday.isToday }" v-for='(weekday, index) in weekdays'>
         {{ weekday.nameShort }}
       </div>
     </div>
     <div class='week' v-for='week in weeks'>
       <div class='day' :class='{ today: day.isToday, "not-in-month": !day.inMonth }' v-for='day in week'>
-        {{ day.day }}
-        {{ day.events }}
+        <span class="day__title">{{ day.day }}</span>
+        <events :events="day.events" :date="day.dateStr" @addEvent="addEvent"></events>
       </div>
     </div>
   </div>
@@ -28,6 +28,7 @@
 
 <script>
 import Names from '../config/locale'
+import Events from './Events'
 
 // Calendar data
 const _daysInMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -49,6 +50,9 @@ let pad = function(num, size) {
 }
 
 export default {
+  components: {
+    Events
+  },
   data() {
     return {
       month: _todayComps.month,
@@ -77,7 +81,9 @@ export default {
     },
   },
   computed: {
-    // Our component exposes month as 1-based, but sometimes we need 0-based
+    isWeekdayToday (index) {
+      return _todayComps.day == index
+    },
     monthIndex() {
       return this.month - 1;
     },
@@ -116,7 +122,11 @@ export default {
     },
     // State for weekday header (no dependencies yet...)
     weekdays() {
-      return Names[this.locale].weekdayNames.slice(this.startWeek, 7 + this.startWeek);
+      let weekdays = Names[this.locale].weekdayNames.slice(this.startWeek, 7 + this.startWeek);
+      weekdays.map((weekday, index) => {
+        weekday.isToday = (index - 1 == _todayComps.day - this.startWeek)
+      })
+      return weekdays
     },
     // State for calendar header
     header() {
@@ -180,6 +190,7 @@ export default {
           //  so we'll supply all the data we can
           week.push({
             label: (day && thisMonth) ? day.toString() : '',
+            dateStr: currentDay,
             day,
             weekday: d,
             week: w,
@@ -240,45 +251,53 @@ export default {
     movePreviousYear() {
       this.year--;
     },
+    addEvent(dateStr) {
+      console.log('addEvent', this, dateStr);
+      this.events.push({date: dateStr, time: '12:00', title: 'Some new event', class: 'green'})
+    }
   },
 }
 </script>
 
 <style lang="sass">
   $fontFamily: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif
-  $themeColor: #ff7a58
 
   $headerPadding: 0.5rem 1rem
-  $headerBorderWidth: 1px
+  $headerBorderWidth: 2px
   $headerBorderStyle: solid
-  $headerBorderColor: #aaaaaa
-  $headerBackground: $themeColor
-  $headerColor: white
+  $headerBorderColor: #ffffff
+  $headerBackground: #ffffff
+  $headerColor: #3f4144
 
   $weekdayPadding: 0.4rem 0
-  $weekdayColor: #7a7a7a
-  $weekdayBorderWidth: 1px
+  $weekdayColor: #879096
+  $weekdayBorderWidth: 2px
   $weekdayBorderStyle: solid
-  $weekdayBorderColor: #aaaaaa
-  $weekdayBackground: #eaeaea
+  $weekdayBorderColor: #f6f9fc
+  $weekdayTodayBackground: #dfe8ee
+  $weekdayBackground: #f6f9fc
+
+  $weekBorderColor: #dfe8ee
 
   $dayColor: #3a3a3a
-  $dayBorder: solid 1px #aaaaaa
+  $dayBorder: solid 2px white
   $dayBackgroundColor: white
   $dayWidth: 14.2857%
-  $dayHeight: 50px
+  $dayHeight: 120px
 
   $todayColor: white
-  $todayBackgroundColor: $themeColor
+  $todayBackgroundColor: #00b5d5
 
-  $notInMonthColor: #cacaca
-  $notInMonthBackgroundColor: #fafafa
+  $notInMonthOpacity: 0.5
+  $notInMonthColor: #868b8e
+  $notInMonthBackgroundColor: #f6f9fc
 
   *
     box-sizing: border-box
 
   .calendar-layout
     min-width: 400px
+    width: 100%
 
   .calendar
     display: flex
@@ -290,8 +309,7 @@ export default {
     align-items: center
     color: $headerColor
     padding: $headerPadding
-    border-width: $headerBorderWidth
-    border-style: $headerBorderStyle
+    border-right: $headerBorderWidth $headerBorderStyle
     border-color: $headerBorderColor
     background-color: $headerBackground
 
@@ -324,14 +342,18 @@ export default {
     align-items: center
     padding: $weekdayPadding
     color: $weekdayColor
-    border-width: $weekdayBorderWidth
-    border-style: $weekdayBorderStyle
+    border-right: $weekdayBorderWidth $weekdayBorderStyle
     border-color: $weekdayBorderColor
     background-color: $weekdayBackground
     cursor: default
 
+  .weekday-today
+    border-color: $weekdayTodayBackground
+    background-color: $weekdayTodayBackground
+
   .week
     display: flex
+    border-bottom: $weekBorderColor 2px solid
 
   .day
     width: $dayWidth
@@ -341,17 +363,27 @@ export default {
     align-items: center
     color: $dayColor
     background-color: $dayBackgroundColor
-    border: $dayBorder
+    border-right: $dayBorder
     cursor: default
+    position: relative
+
+  .day__title
+    // justify-content: left
+    // align-items: top
+    position: absolute
+    top: 5px
+    left: 15px
 
   .today
     font-weight: 500
     color: $todayColor
     background-color: $todayBackgroundColor
+    border-right: $todayBackgroundColor
 
   .not-in-month
     color: $notInMonthColor
     background-color: $notInMonthBackgroundColor
+    opacity: $notInMonthOpacity
 
   .options
     padding: 20px
